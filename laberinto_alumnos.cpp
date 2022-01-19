@@ -20,6 +20,7 @@
 // ctime y windows.h sirve para crear un numero aleatorio
 #include <ctime>
 #include <windows.h>
+// esto no se lo que hace
 #include <thread>      
 #include <chrono> 
 // La biblioteca string sirve para cadenas de caracteres
@@ -72,14 +73,14 @@ struct Nodo
 
 /**
 *
-* @brief Definición de tipo de dato MNodos de tamaño 10x10 elementos de tipo Nodo
+* @brief DefiniciÃ³n de tipo de dato MNodos de tamaÃ±o 10x10 elementos de tipo Nodo
 *
 * @typedef MNodos
 */
 typedef Nodo MNodos [TAM] [TAM];
 /**
 *
-* @brief Definición de tipo de dato MParedes de tamaño 100x100 elementos de tipo bool,
+* @brief DefiniciÃ³n de tipo de dato MParedes de tamaÃ±o 100x100 elementos de tipo bool,
 * matriz de adyacencias
 *
 * @typedef MParedes
@@ -172,17 +173,46 @@ int main ()
  * @param [out] v matriz de adyacencias
  *
  */
-void Inicializar (MNodos n, MParedes a) // Inicializamos el laberinto
+void Inicializar (MNodos n, MParedes a) 
 {
-	srand(time(NULL)); // Creamos un numero aleatorio
-	for (unsigned int i = 0; i < TAM; i++)
+	// Inicializamos el laberinto
+	unsigned int i, j;
+	// Asignamos false a todas las paredes
+	for (i = 0; i < TAM * TAM; i++)
 	{
-		for (unsigned int j = 0; j < TAM; j++)
+		for (j = 0; j < TAM * TAM; j++)
 		{
-			n[i][j].idN = 0 + rand()%(256);	// variable = limite_inferior + rand() % (limite_superior + 1 - limite_inferior);
+			a[i][j] = false;
 		}
 	}
-	
+	// Tenemos que crear dos bucles, ya que uno es de tamaÃ±o TAM y el otro de TAM*TAM
+	for (i = 0; i < TAM; i++)
+	{
+		
+		for (j = 0; j < TAM; j++)
+		{
+			// Primero definiremos las celdas
+			n[i][j].v = false;
+			n[i][j].idN = (i - 1) * TAM + j;
+			n[i][j].idE = i * TAM + j + 1;
+			n[i][j].idO = i * TAM + j - 1;
+			n[i][j].idS = (i + 1) * TAM + j;			
+			// Esto sirve para los bordes del laberinto
+			// Si 'i' vale 0 esta en la posicion mÃ¡s al norte
+			if(i == 0) 
+				n[i][j].idN = -1;
+			// Si 'j' vale 0 esta en la posiciÃ³n mÃ¡s al oeste
+			if (j == 0)
+				n[i][j].idO = -1;
+			// Si 'i' vale TAM - 1, es decir 9, esta en el sur 
+			if (i == TAM - 1)
+				n[i][j].idS = -1;
+			// Si 'j' vale TAM - 1 esta en el este
+			if (j == TAM - 1)
+				n[i][j].idE = -1; 
+				
+		}
+	}
 	
 	return;
 }
@@ -205,8 +235,8 @@ void Crear (unsigned int id, MNodos n, MParedes a, HANDLE h)
 
 /**
  *
- * Devuelve una celda vecina que no ha sido aún visitada.
- * durante la construcción del lab.
+ * Devuelve una celda vecina que no ha sido aÃºn visitada.
+ * durante la construcciÃ³n del lab.
  *
  * @param [in] id identificador de la celda actual
  * @param [in] n matriz de nodos 
@@ -268,9 +298,9 @@ void MostrarEstado(Estado p, HANDLE h)
 
 /**
  *
- * Muestra el menú.
+ * Muestra el menÃº.
  *
- * @return la opción elegida por el usuario
+ * @return la opciÃ³n elegida por el usuario
  *
  */ 
 char Menu ()
@@ -321,7 +351,7 @@ void Guardar (ofstream & f, MParedes a)
 /**
  *
  * Devuelve una cadena con las orientaciones de busqueda al azar
- * en la generación del laberinto
+ * en la generaciÃ³n del laberinto
  *
  * @return una cadena de orientaciones
  *
