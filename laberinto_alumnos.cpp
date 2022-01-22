@@ -2,28 +2,31 @@
  *
  * @file laberinto_alumnos.cpp
  *
- * @brief 
+ * @brief Programa para la generacion y resolucion de un laberinto.
  *
- * Programa para la generacion y resolucion de un laberinto.
+ * Generación mediante una cadena generada de manera aleatoria siguiendo el backtracking
+ * y una resolución siguiendo la regla de la mano derecha
  *
- * @version 1
- * @author Mario Gil Domingo
- * @author Luis Razvan Petrisor
+ * @version 1.4
+ *
+ * @author Mario Gil Domingo, Luis Razvan Petrisor
+ * 
  * @date 27 Diciembre 2021
  *
  * @copyright Universidad de Valencia
+ *
  */
  
 #include <iostream>
-// Sirve para crear, leer y guardar los archivos en textos
+///< Sirve para crear, leer y guardar los archivos en textos
 #include <fstream> 
-// ctime y windows.h sirve para crear un numero aleatorio
+///< ctime y windows.h sirve para crear un numero aleatorio
 #include <ctime>
 #include <windows.h>
-// esto no se lo que hace
+///< Sirven para crear la función sleep_for()
 #include <thread>      
 #include <chrono> 
-// La biblioteca string sirve para cadenas de caracteres
+///< La biblioteca string sirve para cadenas de caracteres
 #include <string>
  
 using namespace std;
@@ -88,26 +91,27 @@ typedef Nodo MNodos [TAM] [TAM];
 typedef bool MParedes [TAM * TAM][TAM * TAM]; 
 
 string AleatorizarDir ();
-void Inicializar (MNodos, MParedes);
+void Inicializar (MNodos, MParedes); 
 void Crear (unsigned int, MNodos, MParedes, HANDLE);
 bool NoVisitada (unsigned int, MNodos, MParedes, unsigned int &);
 void EjecutarMov(MNodos, MParedes, Estado &, string, HANDLE);
 void Resolver (Estado &, MNodos, MParedes, HANDLE);
-void Mostrar (MParedes, HANDLE);
-void Leer (ifstream &, MParedes);
-void Guardar (ofstream &, MParedes);
-char Menu();
-void IrA (unsigned int, unsigned int, HANDLE);
+void Mostrar (MParedes, HANDLE); 
+void Leer (ifstream &, MParedes);  
+void Guardar (ofstream &, MParedes); 
+char Menu(); 
+void IrA (unsigned int, unsigned int, HANDLE); 
 void MostrarEstado (Estado, HANDLE);
 
 int main ()
 {
+	// Esto no hay que hacer nada
 	HANDLE h = GetStdHandle (STD_OUTPUT_HANDLE);
 	CONSOLE_CURSOR_INFO cursor;
 	cursor.bVisible = FALSE;
 	SetConsoleCursorInfo (h, &cursor);
 	system("MODE CON COLS=42 LINES=26");
-    //system ("color F0");
+    system ("color E0");
     
 	MNodos n; 
 	MParedes a; 
@@ -121,7 +125,7 @@ int main ()
 		op = Menu();
 		switch (op)
 		{
-			case 'A':
+			case 'A':				
 				Inicializar (n, a);
 				Crear ((TAM - 1) * TAM, n, a, h); //id de la Entrada
 				Mostrar (a, h); 
@@ -135,7 +139,7 @@ int main ()
 				{
 					Leer (f_in, a);
 					f_in.close ();
-				}
+				} 
 				break;	
 			case 'C':
 				cout << "Introduce el nombre: ";
@@ -146,19 +150,21 @@ int main ()
 				{
 					Guardar (f_out, a);
 					f_out.close ();
-				}
+				} 				
 				break;	
 			case 'D':
-				Mostrar (a, h);
+				Mostrar (a, h);			
 				break;
 			case 'E':
 				{
+					// system ("cls");
 					Estado e = {TAM - 1, 0, 'N'}; //posicion actual en la E
 					Resolver (e, n, a, h);	//siempre encuentra salida
-					IrA (TAM, 0, h);
+					IrA (TAM, 0, h);		
 				}
 		}
 		system("pause");
+		system ("cls");
 	} 
 	while (op != 'F');
 
@@ -175,9 +181,10 @@ int main ()
  */
 void Inicializar (MNodos n, MParedes a) 
 {
-	// Inicializamos el laberinto
+	///< Inicializamos el laberinto
+	srand(time(NULL) * time (NULL)); ///< Crea un numero aleatorio
 	unsigned int i, j;
-	// Asignamos false a todas las paredes
+	///< Asignamos false a todas las paredes
 	for (i = 0; i < TAM * TAM; i++)
 	{
 		for (j = 0; j < TAM * TAM; j++)
@@ -185,35 +192,36 @@ void Inicializar (MNodos n, MParedes a)
 			a[i][j] = false;
 		}
 	}
-	// Tenemos que crear dos bucles, ya que uno es de tamaño TAM y el otro de TAM*TAM
+	/* Tenemos que crear dos bucles, ya que uno es de tamaño TAM y el otro de TAM*TAM
+	 Inicializamos todos los id, y los bordes les damos el valor de -1.*/
 	for (i = 0; i < TAM; i++)
 	{
 		
 		for (j = 0; j < TAM; j++)
 		{
-			// Primero definiremos las celdas
+			///< Primero definiremos las celdas
 			n[i][j].v = false;
 			n[i][j].idN = (i - 1) * TAM + j;
 			n[i][j].idE = i * TAM + j + 1;
 			n[i][j].idO = i * TAM + j - 1;
 			n[i][j].idS = (i + 1) * TAM + j;			
-			// Esto sirve para los bordes del laberinto
-			// Si 'i' vale 0 esta en la posicion más al norte
+			///< Esto sirve para los bordes del laberinto
+			///< Si 'i' vale 0 esta en la posicion más al norte, por lo que al norte de esta no existe laberinto
 			if(i == 0) 
 				n[i][j].idN = -1;
-			// Si 'j' vale 0 esta en la posición más al oeste
+			///< Si 'j' vale 0 esta en la posición más al oeste, por lo que al oeste de esta no existe laberinto
 			if (j == 0)
 				n[i][j].idO = -1;
-			// Si 'i' vale TAM - 1, es decir 9, esta en el sur 
+			///< Si 'i' vale TAM - 1, es decir 9, esta mas al sur , por lo que al sur de esta no existe laberinto
 			if (i == TAM - 1)
 				n[i][j].idS = -1;
-			// Si 'j' vale TAM - 1 esta en el este
+			///< Si 'j' vale TAM - 1 esta mas al este, por lo que al este de esta no existe laberinto
 			if (j == TAM - 1)
 				n[i][j].idE = -1; 
 				
 		}
 	}
-	
+		
 	return;
 }
 
@@ -230,7 +238,29 @@ void Inicializar (MNodos n, MParedes a)
  */
 void Crear (unsigned int id, MNodos n, MParedes a, HANDLE h)
 {
-// completar
+	/* Crea el laberinto rellenando la matriz de adyacencias 
+	* y eliminando tabiques usando una busqueda en profundida, usa retroceso.
+    * Marcamos la celda como visitada, desde la id, pasamos a
+    * coordenadas, obteniendo asi las filas y las columnas. */
+    unsigned int fil,colum,siguienteVecina;
+    fil = id / TAM;
+    colum = id % TAM;
+    n[fil][colum].v = true;
+
+    ///< Mientras quedan vecinas de celda no visitadas hacer
+    while(NoVisitada(id,n,a, siguienteVecina))
+	{		    
+    		///< eliminar la pared entre celda y siguienteCelda
+    		a[id][siguienteVecina] = true;
+    		a[siguienteVecina][id] = true;
+    		this_thread::sleep_for (chrono::milliseconds(265)); ///< Ponemos un delay, para apreciar con claridad como se van 'levantando' tabiques
+    		Mostrar (a,h);
+     		///< Crear (siguienteCelda)
+     		Crear (siguienteVecina,n,a,h);
+    		//fin_mientras		
+    }
+
+	return;
 }
 
 /**
@@ -247,7 +277,78 @@ void Crear (unsigned int id, MNodos n, MParedes a, HANDLE h)
  */
 bool NoVisitada (unsigned int id, MNodos n, MParedes a, unsigned int & vecinaId)
 {
-// completar
+    ///< Necesitaremos variable para guardar los valores de nuestro nodo
+    int fila,columna,count,aux;
+    ///< Una string donde guardar la direccion aleatoria y otro para substraer la primera letra de la cadena
+    string dir, letra;
+    ///< la variable count guardará el numero de nodos vecinos validos, y si es 0 no quedan vecinos por confirmar
+    count = 0;
+    ///< Guardamos los datos de nuestro nodo
+    fila = id / TAM;
+    columna = id % TAM;
+    ///< Comprobamos si el vecino norte es valido
+    aux = n[fila][columna].idN;
+    if(aux != -1 && !n[aux/TAM][aux%TAM].v) 
+		count++;
+    ///< Comprobamos si el vecino este es valido
+    aux = n[fila][columna].idE;
+    if(aux != -1 && !n[aux/TAM][aux%TAM].v) 
+		count++;
+    ///< Comprobamos si el vecino sur es valido
+    aux = n[fila][columna].idS;
+    if(aux != -1 && !n[aux/TAM][aux%TAM].v) 
+		count++;
+    ///< Comprobamos si el vecino Oeste es valido
+    aux = n[fila][columna].idO;
+    if(aux != -1 && !n[aux/TAM][aux%TAM].v) 
+		count++;
+    if(!count) ///< Si no hay ningún válido (count == 0) devolvemos que no quedan casillas NoVisitadas, por lo que todas estarían visitadas
+		return false;
+    
+	bool encontrado = false; ///< Creamos un booleano para que se repita el bucle hasta que encuentre una celda valida
+    while(!encontrado)
+	{
+        dir = AleatorizarDir(); 						///< Obtenemos la cadena aleatoria
+        letra = dir.substr(0,1); 						///< Substramos la primera letra de la cadena
+        dir = dir.erase(0); 							///< Borramos la primera letra de la cadena porque no nos hace más falta
+        if(letra == "N")
+		{
+                aux = n[fila][columna].idN; 			///< Aux será en nodo que tenga al norte
+                if(aux != -1 && !n[aux/TAM][aux%TAM].v) ///< Se ejecuta si existe este nodo, es decir, aux != -1 y no ha sido visitada
+				{
+                    vecinaId = aux; 					///< Al cumplirse las condiciones la celda auxiliar pasa a ser la siguienteVecina
+                    encontrado = true; 					///< Encontrado es true, y sale del bucle while
+                } 										///< Esto se repite para cada caso, es decir, N,S,E,O.			
+		}
+        else if(letra == "S")
+		{
+                aux = n[fila][columna].idS;
+                if(aux != -1 && !n[aux/TAM][aux%TAM].v)
+				{
+                    vecinaId = aux;
+                    encontrado = true; 
+                }			
+		}
+        else if(letra == "E")
+		{
+                aux = n[fila][columna].idE;
+                if(aux != -1 && !n[aux/TAM][aux%TAM].v)
+				{
+                    vecinaId = aux;
+                    encontrado = true; 
+                }
+		}
+        else if(letra == "O")
+		{
+                aux = n[fila][columna].idO;
+                if(aux != -1 && !n[aux/TAM][aux%TAM].v)
+				{
+                    vecinaId = aux;
+                    encontrado = true; 
+                }			
+		}
+    }
+    return true;
 }
 
 /**
@@ -262,9 +363,42 @@ bool NoVisitada (unsigned int id, MNodos n, MParedes a, unsigned int & vecinaId)
  * @param [in] h handle de la ventana donde se muestra el laberinto
  *
  */
-void EjecutarMov(MNodos n, MParedes a, Estado & p, string ori, HANDLE h)
+void EjecutarMov (MNodos n, MParedes a, Estado & p, string ori, HANDLE h)
 {
-// completar
+	int id = p.f * TAM + p.c; ///< Obteniendo de la estrucutra Estado las filas y las columnas las pasamos al id.
+	bool verificar = false;  ///< Creamos un booleano para que se repita el bucle hasta que se ponga a true y
+    while(verificar == false)
+	{
+		for (unsigned int i = 0; i< ori.length(); i++)
+		{
+///< Si la letra es N, ademas entre la celda y su vecina al norte es true, por lo que no hay tabique y ademas es diferente de -1, por lo que si que hay celda al norte
+			if (ori[i] == 'N' && a[id][n[p.f][p.c].idN] == true && n[p.f][p.c].idN != -1) 
+			{
+				p.f = p.f - 1;
+				p.mira = 'N';
+				verificar = true;
+			}
+			else if (ori[i] == 'O' && a[id][n[p.f][p.c].idO] == true && n[p.f][p.c].idO != -1)
+			{
+				p.c = p.c - 1;
+				p.mira = 'O';
+				verificar = true;			
+			}
+			else if (ori[i] == 'E' && a[id][n[p.f][p.c].idE] == true && n[p.f][p.c].idE != -1)
+			{
+				p.c = p.c + 1;
+				p.mira = 'E';
+				verificar = true;				
+			}
+			else if (ori[i] == 'S' && a[id][n[p.f][p.c].idS] == true && n[p.f][p.c].idS != -1)
+			{
+				p.f = p.f + 1;
+				p.mira = 'S';
+				verificar = true;			
+			}
+		}
+	}
+	return;
 }
 
 /**
@@ -279,7 +413,44 @@ void EjecutarMov(MNodos n, MParedes a, Estado & p, string ori, HANDLE h)
  */
 void Resolver (Estado & p, MNodos n, MParedes a, HANDLE h)
 {
-// completar	
+	Mostrar (a,h);	
+	MostrarEstado (p,h);		
+	///< Algoritmo Resolver Laberinto Regla Mano Derecha
+	///< mientras no estemos en la celda de salida hacer
+	while (p.f != 0 || p.c != TAM - 1) 
+	{
+		MostrarEstado (p,h); ///< Mostramos la flechita
+		Mostrar(a,h); ///< Mostramos el laberinto		
+		switch (p.mira)
+		{
+			///< si mira al Norte entonces EjecutarMov (estado, "ENOS"); 
+			case 'N':
+					EjecutarMov (n,a,p,"ENOS",h);	
+					
+				break;
+			///< si mira al Oeste entonces EjecutarMov (estado, "NOSE");
+			case 'O':
+					EjecutarMov (n,a,p,"NOSE",h);
+				
+				break;
+			///< si mira al Sur entonces EjecutarMov (estado, "OSEN");		
+			case 'S':
+					EjecutarMov (n,a,p,"OSEN",h);
+				
+				break;
+			///< si mira al Este entonces EjecutarMov (estado, "SENO");						
+			case 'E':
+					EjecutarMov (n,a,p,"SENO",h);
+				
+				break;			 	
+		}
+	Mostrar(a,h);		
+	MostrarEstado(p,h);
+	}
+	///< Poner flecha direccion norte al final
+	p.mira = 'N';
+	MostrarEstado(p,h);
+	return;
 }
 
 /**
@@ -290,9 +461,26 @@ void Resolver (Estado & p, MNodos n, MParedes a, HANDLE h)
  * @param [in] h handle de la ventana donde se muestra el laberinto
  *
  */
-void MostrarEstado(Estado p, HANDLE h)
+void MostrarEstado (Estado p, HANDLE h)
 {
-// completar
+	IrA (p.f, p.c, h);
+	///< Metemos un sleep_for para que haya un delay, y se aprecie la flechita
+	this_thread::sleep_for (chrono::milliseconds(265));
+	 
+	/* switch o if elses para sacara la posicion de la flecha en p.mira
+	* Para cada caso es un cout mirando en direccion a la flecha e ir a la posicion en cada caso (funcion IrA)
+	* el char de norte = "30", sur = "31", este = "16", oeste ="17" */
+	
+	if (p.mira == 'N')
+		cout << char(30);
+	else if (p.mira == 'O')
+		cout << char(17);
+	else if (p.mira == 'E')
+		cout << char(16);
+	else if (p.mira == 'S')
+		cout << char (31);					
+	
+	return;
 }
 
 
@@ -304,8 +492,8 @@ void MostrarEstado(Estado p, HANDLE h)
  *
  */ 
 char Menu ()
-{
-	char op;
+{				
+	char op;	
 	do
 	{	cout << "         Laberinto         " << endl;
 		cout << "---------------------------" << endl;
@@ -332,7 +520,16 @@ char Menu ()
  */ 
 void Leer (ifstream & f, MParedes a)
 {
-// completar
+	for (unsigned int i = 0; i < TAM*TAM; i++)
+	{
+		for (unsigned int j = 0; j < TAM*TAM; j++)
+		{
+			f >> a[i][j];
+		}
+	}
+	
+	return;
+	
 }
 
 /**
@@ -345,7 +542,17 @@ void Leer (ifstream & f, MParedes a)
  */ 
 void Guardar (ofstream & f, MParedes a)
 {
-// completar
+	///< Hay que hacer dos bucles for y guardar los booleanos con f <<
+	for (unsigned int i = 0; i< TAM*TAM; i++)
+	{
+		for (unsigned int j = 0; j < TAM*TAM; j++)
+		{
+			f << a[i][j] << " ";
+		}
+		f << "\n";
+	}
+	
+	return;
 }
 
 /**
@@ -359,8 +566,37 @@ void Guardar (ofstream & f, MParedes a)
 string AleatorizarDir ()
 {
 	string d, ori = "ENOS"; 
-// completar
-	
+	int aleatorio,pos = 0;
+	for (unsigned int i = 0; i < ori.length(); i++)
+	{
+		while (pos != -1) ///< Mientras no encuentre la letra que se repita
+		{ 
+			aleatorio = rand() % ori.length(); ///< El numero aleatorio esta comprendido entre 1 y 4
+			switch(aleatorio)
+			{
+				case 0:
+					pos = d.find("N"); 		///< Busca la letra
+					if (pos == -1) 			///< Si la letra no está, su posición es -1
+						d = "N" + d; 		///< Se añade la letra al principio de la cadena			
+					break;
+				case 1:
+					pos = d.find("S");
+					if (pos == -1) 
+						d = "S" + d;
+					break;
+				case 2:
+					pos = d.find("E");
+					if (pos == -1)
+						d = "E" + d;
+					break;
+				case 3:
+					pos = d.find("O");
+					if (pos == -1)
+						d = "O" + d;
+					break;		 	
+			}
+		}
+	}	
 	return d;
 }
 
@@ -416,5 +652,4 @@ void IrA (unsigned int fil, unsigned int col, HANDLE h)
     COORD p = { short(4 * col + 2), short(2 * fil + 1)};
 	SetConsoleCursorPosition (h, p);   
 }
-
 
