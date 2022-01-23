@@ -413,6 +413,39 @@ void EjecutarMov (MNodos n, MParedes a, Estado & p, string ori, HANDLE h)
  */
 void Resolver (Estado & p, MNodos n, MParedes a, HANDLE h)
 {
+	
+	/* Volvemos a inicializar los Nodos, ya que si leemos desde fichero del laberinto, y 
+	* le damos a Resolver, entonces los ids de la matriz MNodos están sin 
+	* inicializar, y no resuelve el laberinto. */
+	unsigned int i,j;
+	for (i = 0; i < TAM; i++)
+	{
+		
+		for (j = 0; j < TAM; j++)
+		{
+			///< Primero definiremos las celdas
+			n[i][j].v = false;
+			n[i][j].idN = (i - 1) * TAM + j;
+			n[i][j].idE = i * TAM + j + 1;
+			n[i][j].idO = i * TAM + j - 1;
+			n[i][j].idS = (i + 1) * TAM + j;			
+			///< Esto sirve para los bordes del laberinto
+			///< Si 'i' vale 0 esta en la posicion más al norte, por lo que al norte de esta no existe laberinto
+			if(i == 0) 
+				n[i][j].idN = -1;
+			///< Si 'j' vale 0 esta en la posición más al oeste, por lo que al oeste de esta no existe laberinto
+			if (j == 0)
+				n[i][j].idO = -1;
+			///< Si 'i' vale TAM - 1, es decir 9, esta mas al sur , por lo que al sur de esta no existe laberinto
+			if (i == TAM - 1)
+				n[i][j].idS = -1;
+			///< Si 'j' vale TAM - 1 esta mas al este, por lo que al este de esta no existe laberinto
+			if (j == TAM - 1)
+				n[i][j].idE = -1; 
+				
+		}
+	}
+	
 	Mostrar (a,h);	
 	MostrarEstado (p,h);		
 	///< Algoritmo Resolver Laberinto Regla Mano Derecha
